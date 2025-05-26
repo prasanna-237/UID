@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory Management Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script> <!-- New line: datalabels plugin -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .chart-container {
+            width: 45%;
+            float: left;
+            margin: 2%;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Inventory Management System - Data Visualization</h1>
+
+    <div class="chart-container">
+        <canvas id="barChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="pieChart"></canvas>
+    </div>
+
+    <script>
+        // Example inventory data
+        const inventoryData = [
+            { item: "Laptops", quantity: 45, category: "Electronics" },
+            { item: "Smartphones", quantity: 30, category: "Electronics" },
+            { item: "Chairs", quantity: 60, category: "Furniture" },
+            { item: "Desks", quantity: 40, category: "Furniture" },
+            { item: "Printers", quantity: 15, category: "Office Supplies" },
+            { item: "Stationery", quantity: 80, category: "Office Supplies" },
+        ];
+
+        // Prepare data for the bar chart
+        const barLabels = inventoryData.map(item => item.item);
+        const barQuantities = inventoryData.map(item => item.quantity);
+
+        // Create the bar chart
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        const barChart = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: barLabels,
+                datasets: [{
+                    label: 'Quantity in Stock',
+                    data: barQuantities,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.chart._metasets[0].total;
+                                const value = context.raw;
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${context.label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Prepare data for the pie chart (by category)
+        const categoryTotals = {};
+        inventoryData.forEach(item => {
+            categoryTotals[item.category] = (categoryTotals[item.category] || 0) + item.quantity;
+        });
+
+        const pieLabels = Object.keys(categoryTotals);
+        const pieData = Object.values(categoryTotals);
+
+        // Create the pie chart
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        const pieChart = new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: pieLabels,
+                datasets: [{
+                    data: pieData,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(75, 192, 192, 0.6)'
+                    ],
+                    borderColor: '#fff',
+                    borderWidth: 1,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    datalabels: {
+                        formatter: (value, context) => {
+                            const sum = context.chart._metasets[context.datasetIndex].total;
+                            const percentage = ((value / sum) * 100).toFixed(1) + '%';
+                            return percentage;
+                        },
+                        color: '#fff',
+                        font: {
+                            weight: 'bold'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const sum = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const value = context.raw;
+                                const percentage = ((value / sum) * 100).toFixed(1);
+                                return `${context.label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [ChartDataLabels]
+        });
+    </script>
+
+</body>
+</html>
